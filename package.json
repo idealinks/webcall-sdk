@@ -1,5 +1,5 @@
 {
-  "name": "retell-client-js-sdk",
+  "name": "webcall-sdk",
   "version": "2.0.7",
   "description": "",
   "main": "dist/index.js",

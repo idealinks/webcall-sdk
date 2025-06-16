@@ -6,7 +6,7 @@ export interface StartCallConfig {
     playbackDeviceId?: string;
     emitRawAudioSamples?: boolean;
 }
-export declare class RetellWebClient extends EventEmitter {
+export declare class WebCallClient extends EventEmitter {
     private room;
     private connected;
     isAgentTalking: boolean;

@@ -11,7 +11,7 @@ import {
   createAudioAnalyser,
 } from "livekit-client";
 
-const hostUrl = "wss://retell-ai-4ihahnq7.livekit.cloud";
+const hostUrl = "https://d1muclxpvr9974.cloudfront.net";
 const decoder = new TextDecoder();
 
 export interface StartCallConfig {
@@ -22,7 +22,7 @@ export interface StartCallConfig {
   emitRawAudioSamples?: boolean; // receive raw float32 audio samples (ex. for animation). Default to false.
 }
 
-export class RetellWebClient extends EventEmitter {
+export class WebCallClient extends EventEmitter {
   // Room related
   private room: Room;
   private connected: boolean = false;
@@ -125,7 +125,7 @@ export class RetellWebClient extends EventEmitter {
     this.analyzerComponent.analyser.getFloatTimeDomainData(dataArray);
     this.emit("audio", dataArray);
     this.captureAudioFrame = window.requestAnimationFrame(() =>
-      this.captureAudioSamples(),
+      this.captureAudioSamples()
     );
   }
 
@@ -139,7 +139,7 @@ export class RetellWebClient extends EventEmitter {
             this.stopCall();
           }, 500);
         }
-      },
+      }
     );
 
     this.room.on(RoomEvent.Disconnected, () => {
@@ -154,7 +154,7 @@ export class RetellWebClient extends EventEmitter {
       (
         track: RemoteTrack,
         publication: RemoteTrackPublication,
-        participant: RemoteParticipant,
+        participant: RemoteParticipant
       ) => {
         if (
           track.kind === Track.Kind.Audio &&
@@ -168,7 +168,7 @@ export class RetellWebClient extends EventEmitter {
             if (startCallConfig.emitRawAudioSamples) {
               this.analyzerComponent = createAudioAnalyser(track);
               this.captureAudioFrame = window.requestAnimationFrame(() =>
-                this.captureAudioSamples(),
+                this.captureAudioSamples()
               );
             }
           }
@@ -176,7 +176,7 @@ export class RetellWebClient extends EventEmitter {
           // Start playing audio for subscribed tracks
           track.attach();
         }
-      },
+      }
     );
   }
 
@@ -187,7 +187,7 @@ export class RetellWebClient extends EventEmitter {
         payload: Uint8Array,
         participant?: RemoteParticipant,
         kind?: DataPacket_Kind,
-        topic?: string,
+        topic?: string
       ) => {
         try {
           // parse server data
@@ -211,7 +211,7 @@ export class RetellWebClient extends EventEmitter {
         } catch (err) {
           console.error("Error decoding data received", err);
         }
-      },
+      }
     );
   }
 }
