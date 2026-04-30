@@ -11,11 +11,14 @@ import {
   createAudioAnalyser,
 } from "livekit-client";
 
-const hostUrl = "https://d1muclxpvr9974.cloudfront.net";
+const defaultHostUrl = "https://d1muclxpvr9974.cloudfront.net";
+const thinkrrVoiceHostUrl = "https://voice-rtc.thinkrr.ai";
 const decoder = new TextDecoder();
 
 export interface StartCallConfig {
   accessToken: string;
+  /** When true, connect to Thinkrr Voice RTC instead of the default host. Default false. */
+  thinkrrVoice?: boolean;
   sampleRate?: number;
   captureDeviceId?: string; // specific sink id for audio capture device
   playbackDeviceId?: string; // specific sink id for audio playback device
@@ -67,7 +70,10 @@ export class WebCallClient extends EventEmitter {
       this.handleDataEvents();
 
       // Connect to room
-      await this.room.connect(hostUrl, startCallConfig.accessToken);
+      const livekitUrl = startCallConfig.thinkrrVoice
+        ? thinkrrVoiceHostUrl
+        : defaultHostUrl;
+      await this.room.connect(livekitUrl, startCallConfig.accessToken);
       console.log("connected to room", this.room.name);
 
       // Turns microphone track on
