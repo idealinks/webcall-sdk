@@ -1,6 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 export interface StartCallConfig {
     accessToken: string;
+    thinkrrVoice?: boolean;
     sampleRate?: number;
     captureDeviceId?: string;
     playbackDeviceId?: string;
