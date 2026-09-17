@@ -21,8 +21,7 @@ const client = new RetellClient({ key: "public_key_..." });
 ```
 
 The key is checked against its allowed domains; scope it to what the page
-needs. `baseURL` points the client at another region or a proxy (default
-`https://api.retellai.com`); `fetch` swaps the HTTP implementation.
+needs.
 
 The backend reports which SDK versions it supports: behind the recommended
 version logs a `console.error`; below the minimum also emits `error` on the
@@ -117,9 +116,40 @@ microphone before it silences the AI — a denied prompt leaves the call as it w
 
 Monitoring needs a wider key than a web call does, so keep it somewhere you
 control: a public key with tight allowed domains and reCAPTCHA, a page behind
-your own auth, or a `fetch` that proxies the requests and keeps the key on your
-server — that last one only without the transcript, whose WebSocket carries the
-key itself.
+your own auth, or a proxy that keeps the key on your server:
+
+```ts
+const PROXY = "https://app.example.com/retell"; // wherever your server runs
+
+const client = new RetellClient({
+  key: "unused", // your proxy sets the real Authorization header
+  // /v3/create-web-call → https://app.example.com/retell/v3/create-web-call
+  fetch: (url, init) => fetch(PROXY + new URL(String(url)).pathname, init),
+});
+```
+
+That route holds the real key. A minimal Express example:
+
+```js
+app.use("/retell", express.json(), async (req, res) => {
+  if (!req.session?.user) return res.sendStatus(401); // your own auth
+
+  const upstream = await fetch("https://api.retellai.com" + req.url, {
+    method: req.method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.RETELL_API_KEY}`,
+    },
+    body: JSON.stringify(req.body),
+  });
+
+  res.status(upstream.status).send(await upstream.text());
+});
+```
+
+`fetch` covers the requests and nothing else: the transcript stream is a
+WebSocket that carries the key itself, so a page that renders the transcript
+needs the key in the browser, and belongs behind your own auth instead.
 
 ### Events
 
