@@ -31,26 +31,115 @@ session.
 ### Start a web call
 
 ```ts
+// Call this from a click: the microphone prompt happens here.
 const call = client.createWebCall({
-  agent_id: "agent_...",           // plus any /v3/create-web-call body field
+  agent_id: "agent_...",
+  // Any other /v3/create-web-call body field goes here as-is.
+  retell_llm_dynamic_variables: { customer_name: "Ada" },
   hooks: {
-    onStatus: (status) => ...,     // connecting → live → ended
-    onAgentStartTalking: () => ...,
-    onAgentStopTalking: () => ...,
-    onEnd: () => ...,
-    onError: (err) => ...,
+    onStatus: (status) => console.log(status), // connecting → live → ended
+    onEnd: ({ disconnection_reason }) => console.log("ended", disconnection_reason),
+    // Mic denied, key rejected, connection lost: all arrive here.
+    onError: (err) => console.error(err),
   },
 });
 
+// The session is returned before it connects. Awaiting is optional: `ready`
+// settles when the call goes live, and rejects for what onError already saw.
+await call.ready;
+
 call.mute();
 call.unmute();
-await call.end();                // leaving is what ends a web call
+
+await call.end(); // leaving is what ends a web call
 ```
 
-`transcript: true` also streams the transcript (`onTranscript`, and `onEnd`
-then carries the `disconnection_reason`); it needs a key with `Call.Write`,
-which a public key scoped to web calls alone won't have, so it is off by
-default. If the stream is refused or dropped the call itself goes on.
+`transcript: true` adds the transcript stream, and with it everything the
+call itself cannot report: what was said (`onTranscript`), which node the agent
+is on (`onNodeTransition`), and why the call ended (`disconnection_reason` on
+`onEnd`). Without it a web call still reports `status`, `end` and `error`, but
+nothing about the conversation — see [Events](#events). It needs a key with
+`Call.Write`, which a public key
+scoped to web calls alone won't have, so it is off by default. If the stream is
+refused or dropped the call itself goes on.
+
+### Watch an ongoing call
+
+```ts
+// The transcript starts flowing right away; audio and mic are separate steps.
+const watch = client.monitorCall({
+  call_id: "call_...",
+  hooks: {
+    // connecting → monitoring → listening → taken_over → ended
+    onStatus: (status) => console.log(status),
+    // The whole list on every change — replace what you render, don't append.
+    // A second argument carries an earlier leg's transcript (a transfer).
+    onTranscript: (transcript) => {
+      const last = transcript[transcript.length - 1];
+      // Tool calls, node transitions and DTMF ride the same list.
+      if (last?.role === "agent" || last?.role === "user") {
+        console.log(last.role, last.content);
+      }
+    },
+    onEnd: ({ disconnection_reason }) => console.log("ended", disconnection_reason),
+    onError: (err) => console.error(err),
+  },
+});
+
+// Autoplay: call from a user gesture. If it throws, the session is untouched
+// and still on the transcript, so the operator can click again.
+await watch.listen();
+watch.stopListening(); // back to transcript only
+
+// Steer the agent without taking the call over.
+await watch.update({
+  call_control: {
+    additional_context: "The customer is a Gold member; waive the fee.",
+    trigger_response: true,
+  },
+});
+
+// Irreversible: prompts for the mic first, so a denial leaves the AI running.
+await watch.takeOver();
+watch.mute();
+watch.unmute();
+
+await watch.end(); // hangs up for everyone
+// watch.disconnect() instead just leaves, and the call goes on — except
+// after a take-over, where our leaving is what ends it.
+```
+
+On a monitored call the transcript is on by default, so a transcript-only view
+is the session with nothing else called; `transcript: false` drops it for an
+audio-only one.
+`listen()` needs a user gesture (autoplay), and `takeOver()` asks for the
+microphone before it silences the AI — a denied prompt leaves the call as it was.
+
+Monitoring needs a wider key than a web call does, so keep it somewhere you
+control: a public key with tight allowed domains and reCAPTCHA, a page behind
+your own auth, or a `fetch` that proxies the requests and keeps the key on your
+server — that last one only without the transcript, whose WebSocket carries the
+key itself.
+
+### Events
+
+Hooks are listeners bound at creation; `session.on(event, fn)` does the same
+thing later.
+
+| Event | Hook | Payload | Notes |
+| --- | --- | --- | --- |
+| `status` | `onStatus` | `SessionStatus` | every transition, `ended` included |
+| `transcript` | `onTranscript` | `(transcript, preSessionTranscript)` | the whole list each time; the second is an earlier leg, usually empty |
+| `node_transition` | `onNodeTransition` | `NodeTransitionEvent \| LiveCallNodeTransition` | only when the transcript stream is on |
+| `audio` | `onAudio` | `Float32Array` | needs `audio: { emitRawAudioSamples: true }` |
+| `end` | `onEnd` | `CallEndedEvent` | `disconnection_reason` only when the transcript stream is on |
+| `error` | `onError` | `Error` | non-fatal ones too; `status` says whether the session survived |
+
+Anything newer from the backend is dropped rather than passed through, so
+upgrading the backend never surprises an older page. The `audio` snapshots are
+analyser samples taken on animation frames, not continuous PCM.
+
+### Per-request options
 
 If the public key has reCAPTCHA enabled, every request takes an optional
 `recaptchaToken` (a fresh v3 token — they are single-use):
@@ -58,47 +147,10 @@ If the public key has reCAPTCHA enabled, every request takes an optional
 `takeOver({ recaptchaToken })`, `update(body, { recaptchaToken })`, and on a
 monitored call `end({ recaptchaToken })` (a web call's `end()` makes no
 request). How you obtain the token is up to you; the SDK does not load
-Google's script. The same options object takes `extra`, request fields this
-SDK version doesn't list yet, merged into the body as-is.
+Google's script.
 
-### Watch an ongoing call
-
-```ts
-const watch = client.monitorCall({
-  call_id: "call_...",
-  hooks: {
-    onStatus: (status) => ...,     // connecting → monitoring → listening → taken_over → ended
-    onTranscript: (transcript, preSessionTranscript) => ...,
-    onEnd: ({ disconnection_reason }) => ...,
-    onError: (err) => ...,
-  },
-});
-
-await watch.listen();      // join the audio, receive-only
-watch.stopListening();     // back to transcript only
-await watch.takeOver();    // silence the AI and talk to the caller (irreversible)
-await watch.update({ call_control: { additional_context: "...", trigger_response: true } });
-await watch.end();         // hang up for everyone
-watch.disconnect();        // just leave; the call goes on (after a take-over, leaving ends it)
-```
-
-The transcript streams as soon as the session exists. `listen()` needs a
-user gesture on most browsers (autoplay), and `takeOver()` prompts for the
-microphone before anything irreversible happens — if the prompt is denied,
-the AI is untouched.
-
-### Events
-
-Hooks are listeners bound at creation; `session.on(event, fn)` does the same
-thing later. Sessions only emit the events they declare
-(`status`, `transcript`, `agent_start_talking`, `agent_stop_talking`,
-`update`, `metadata`, `node_transition`, `audio`, `end`, `error`); anything
-newer from the backend is dropped, so upgrading the backend never surprises
-an older page.
-
-`audio` needs `audio: { emitRawAudioSamples: true }` and carries
-`Float32Array` analyser snapshots for visualization — sampled on animation
-frames, not a continuous PCM stream.
+The same options object takes `extra` — request fields this SDK version
+doesn't list yet, merged into the body as-is.
 
 ### Without a session
 
@@ -114,3 +166,9 @@ await client.updateLiveCall(callId, { fields_to_override: { metadata: {...} } })
 and will be removed in 4.0: `RetellClient.createWebCall()` replaces the
 create-web-call request plus `startCall`, and `monitorCall()` replaces
 hand-rolled live-listen / take-over flows.
+
+One behavioural difference to plan for: 2.x calls emitted
+`agent_start_talking`, `agent_stop_talking`, `update` and `metadata`; the calls
+`createWebCall()` creates do not. A page that drove a talking indicator or read
+`update.transcript` wants `transcript: true` and the transcript events
+instead.
