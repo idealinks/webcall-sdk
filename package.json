@@ -1,15 +1,30 @@
 {
-  "name": "webcall-sdk",
-  "version": "2.0.7",
-  "description": "",
+  "name": "retell-client-js-sdk",
+  "version": "3.0.1",
+  "description": "Browser SDK for Retell voice calls: start a web call with an agent, or monitor an ongoing call.",
   "main": "dist/index.js",
   "module": "dist/index.m.js",
   "unpkg": "dist/index.umd.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "build": "rm -rf dist && microbundle --tsconfig tsconfig.json --no-sourcemap"
+    "build": "rm -rf dist && node scripts/write-version.js && microbundle --tsconfig tsconfig.json --no-sourcemap",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RetellAI/retell-client-js-sdk.git"
+  },
+  "homepage": "https://github.com/RetellAI/retell-client-js-sdk#readme",
+  "keywords": [
+    "retell",
+    "voice",
+    "ai",
+    "webrtc"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
