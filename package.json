@@ -1,7 +1,7 @@
 {
-  "name": "retell-client-js-sdk",
+  "name": "webcall-sdk",
   "version": "3.0.1",
-  "description": "Browser SDK for Retell voice calls: start a web call with an agent, or monitor an ongoing call.",
+  "description": "Thinkrr fork of retell-client-js-sdk — LiveKit CloudFront / thinkrrVoice hosts.",
   "main": "dist/index.js",
   "module": "dist/index.m.js",
   "unpkg": "dist/index.umd.js",
@@ -12,18 +12,20 @@
   ],
   "scripts": {
     "build": "rm -rf dist && node scripts/write-version.js && microbundle --tsconfig tsconfig.json --no-sourcemap",
+    "test": "npm run build && node --test test/*.test.mjs",
     "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RetellAI/retell-client-js-sdk.git"
+    "url": "git+https://github.com/idealinks/webcall-sdk.git"
   },
-  "homepage": "https://github.com/RetellAI/retell-client-js-sdk#readme",
+  "homepage": "https://github.com/idealinks/webcall-sdk#readme",
   "keywords": [
-    "retell",
+    "vaibe",
     "voice",
     "ai",
-    "webrtc"
+    "webrtc",
+    "thinkrr"
   ],
   "author": "",
   "license": "ISC",

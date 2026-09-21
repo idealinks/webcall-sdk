@@ -7,6 +7,8 @@ export interface StartCallConfig {
     baseURL?: string;
     iceServers?: RTCIceServer[];
     url?: string;
+    /** Thinkrr fork: connect to voice-rtc.thinkrr.ai instead of the CloudFront host. */
+    thinkrrVoice?: boolean;
     listener?: boolean;
     sampleRate?: number;
     captureDeviceId?: string;

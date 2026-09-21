@@ -21,9 +21,18 @@ import {
   TransportHandlers,
 } from "./transport";
 
-const LIVEKIT_HOST = "wss://retell-ai-4ihahnq7.livekit.cloud";
+// --- Thinkrr fork (only intentional host change vs upstream) ---
+// Upstream default: wss://retell-ai-4ihahnq7.livekit.cloud
+const LIVEKIT_HOST = "https://d1muclxpvr9974.cloudfront.net";
+const THINKRR_VOICE_HOST = "https://voice-rtc.thinkrr.ai";
 const PUBLISH_GRANT_TIMEOUT_MS = 5000;
 const decoder = new TextDecoder();
+
+function resolveLiveKitUrl(config: StartCallConfig): string {
+  if (config.url) return config.url;
+  if (config.thinkrrVoice) return THINKRR_VOICE_HOST;
+  return LIVEKIT_HOST;
+}
 
 export class LiveKitTransport implements Transport {
   private room?: Room;
@@ -107,7 +116,7 @@ export class LiveKitTransport implements Transport {
       }
     });
 
-    await room.connect(this.config.url || LIVEKIT_HOST, this.config.accessToken);
+    await room.connect(resolveLiveKitUrl(this.config), this.config.accessToken);
     connected = true;
     // A listener publishes nothing until takeOver().
     if (!this.config.listener) {

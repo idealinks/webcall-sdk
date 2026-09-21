@@ -30,6 +30,8 @@ export interface StartCallConfig {
   // The API's `url`. Live-listen is scoped to the room's own server, so its
   // response names one; create-web-call does not, and the default stands.
   url?: string;
+  /** Thinkrr fork: connect to voice-rtc.thinkrr.ai instead of the CloudFront host. */
+  thinkrrVoice?: boolean;
 
   // Join receive-only, publishing nothing until takeOver(). On both transports.
   listener?: boolean;

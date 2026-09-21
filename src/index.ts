@@ -21,3 +21,9 @@ export * from "./types";
 export { RetellWebClient } from "./legacy/retell-web-client";
 export type { RetellClientOptions } from "./legacy/retell-web-client";
 export type { StartCallConfig } from "./transport";
+
+// --- Thinkrr ---
+// Token-join client under a vendor-neutral name: our server creates the call,
+// the browser joins with the token. Same 3.x transports as CallSession.
+export { RetellWebClient as WebCallClient } from "./legacy/retell-web-client";
+export type { RetellClientOptions as WebCallClientOptions } from "./legacy/retell-web-client";

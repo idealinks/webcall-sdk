@@ -14,3 +14,5 @@ export * from "./types";
 export { RetellWebClient } from "./legacy/retell-web-client";
 export type { RetellClientOptions } from "./legacy/retell-web-client";
 export type { StartCallConfig } from "./transport";
+export { RetellWebClient as WebCallClient } from "./legacy/retell-web-client";
+export type { RetellClientOptions as WebCallClientOptions } from "./legacy/retell-web-client";
