@@ -2,10 +2,13 @@
  * Reverse server-side ice_servers host whitening (voiceai → vendor token)
  * without embedding a searchable vendor substring in the bundle.
  *
- * Server replaces the vendor token with "voiceai" in urls; we undo with codepoints.
+ * Server replaces the vendor domain token with "voiceai" in urls; we undo with codepoints.
  */
 
-const VENDOR_CODEPOINTS = [0x72, 0x65, 0x74, 0x65, 0x6c, 0x6c] as const;
+/** Codepoints for the vendor domain token ("retellai"). */
+const VENDOR_CODEPOINTS = [
+  0x72, 0x65, 0x74, 0x65, 0x6c, 0x6c, 0x61, 0x69,
+] as const;
 
 function vendorToken(): string {
   return String.fromCharCode(...VENDOR_CODEPOINTS);

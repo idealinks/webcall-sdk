@@ -18,18 +18,25 @@ test("upstream vendor names are not re-exported", () => {
 });
 
 test("restoreIceUrl undoes voiceai whitening", () => {
-  const vendor = String.fromCharCode(0x72, 0x65, 0x74, 0x65, 0x6c, 0x6c);
+  const vendor = String.fromCharCode(
+    0x72, 0x65, 0x74, 0x65, 0x6c, 0x6c, 0x61, 0x69,
+  );
   assert.equal(
-    sdk.restoreIceUrl("turns:turn.voiceaiai.com:443"),
-    `turns:turn.${vendor}ai.com:443`,
+    sdk.restoreIceUrl("turns:turn.voiceai.com:443"),
+    `turns:turn.${vendor}.com:443`,
   );
 });
 
 test("dist bundle has no searchable vendor token", () => {
   const src = readFileSync(dist, "utf8");
-  const needle = String.fromCharCode(0x72, 0x65, 0x74, 0x65, 0x6c, 0x6c);
+  const needle = String.fromCharCode(
+    0x72, 0x65, 0x74, 0x65, 0x6c, 0x6c, 0x61, 0x69,
+  );
   assert.equal(src.includes(needle), false, `bundle must not contain ${needle}`);
   assert.equal(src.toLowerCase().includes(needle), false);
+  // shorter prefix must also stay non-literal
+  const prefix = String.fromCharCode(0x72, 0x65, 0x74, 0x65, 0x6c, 0x6c);
+  assert.equal(src.includes(prefix), false);
 });
 
 test("gateway without callId emits error (does not hang)", async () => {
