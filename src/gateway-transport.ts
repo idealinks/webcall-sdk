@@ -5,6 +5,7 @@ import {
   TransportHandlers,
 } from "./transport";
 import { SDK_VERSION } from "./version";
+import { restoreIceServers } from "./ice-host";
 
 // Live-listen needs this: with no mic grant Chrome offers only .local mDNS
 // candidates, unroutable outside its own network.
@@ -17,12 +18,11 @@ const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
 // workable default — live-listen passes its own.
 const WEB_CALL_IDENTITY = "client";
 
-// Signaling goes to Retell, which relays it to the gateway holding the call:
-// gateways answer on a private address, so a browser cannot reach one. Media does
-// not come back through here — it goes straight to whatever the SDP answer
-// advertises. Known the same way LIVEKIT_HOST is; `baseURL` overrides it for
-// local development.
-const RETELL_API_HOST = "https://api.retellai.com";
+// Whitened SDK version header — Thinkrr webrtc-proxy remaps to the vendor name.
+const SDK_VERSION_HEADER = "X-VoiceAI-Client-JS-SDK-Version";
+
+// Signaling goes through Thinkrr's webrtc-proxy (baseURL required). Media uses
+// ice_servers from create-web-call (whitened hosts restored at connect time).
 const WEBRTC_PROXY_PREFIX = "/webrtc-proxy";
 
 export class GatewayTransport implements Transport {
@@ -40,7 +40,10 @@ export class GatewayTransport implements Transport {
 
   constructor(config: StartCallConfig) {
     this.config = config;
-    const host = (config.baseURL || RETELL_API_HOST).replace(/\/+$/, "");
+    if (!config.baseURL) {
+      throw new Error("baseURL is required for the gateway transport");
+    }
+    const host = config.baseURL.replace(/\/+$/, "");
     this.base = `${host}${WEBRTC_PROXY_PREFIX}/${config.callId}`;
   }
 
@@ -50,11 +53,10 @@ export class GatewayTransport implements Transport {
       throw new Error("callId is required for the gateway transport");
     }
 
-    const pc = new RTCPeerConnection({
-      iceServers: this.config.iceServers?.length
-        ? this.config.iceServers
-        : DEFAULT_ICE_SERVERS,
-    });
+    const restored = restoreIceServers(this.config.iceServers);
+    const iceServers = restored?.length ? restored : DEFAULT_ICE_SERVERS;
+
+    const pc = new RTCPeerConnection({ iceServers });
     this.pc = pc;
 
     if (this.config.listener) {
@@ -141,7 +143,7 @@ export class GatewayTransport implements Transport {
     const resp = await fetch(this.base + "/v1/webrtc/sessions", {
       method: "POST",
       headers: this.headers({ "Content-Type": "application/json" }),
-      // No room coordinates: Retell fills them in from the call record, so the
+      // No room coordinates: vendor fills them in from the call record, so the
       // browser never has to be told which room its call lives in.
       body: JSON.stringify({ identity: this.identity(), sdp }),
     });
@@ -250,7 +252,7 @@ export class GatewayTransport implements Transport {
 
   private headers(extra?: Record<string, string>): Record<string, string> {
     const h: Record<string, string> = {
-      "X-Retell-Client-JS-SDK-Version": SDK_VERSION,
+      [SDK_VERSION_HEADER]: SDK_VERSION,
       ...(extra || {}),
     };
     if (this.config.accessToken) {

@@ -9,20 +9,15 @@ import {
 import { LiveKitTransport } from "../livekit-transport";
 import { GatewayTransport } from "../gateway-transport";
 
-// The 2.x client, kept so existing integrations upgrade without changes.
+// Token-join client (upstream file/class was the 2.x vendor web client).
 // Media only: bring your own access_token from create-web-call.
 
-/** @deprecated Use `RetellClientConfig` with `RetellClient`. */
-export interface RetellClientOptions {
+export interface WebCallClientOptions {
   // Used when a call's config neither specifies nor implies a transport.
   defaultTransport?: TransportKind;
 }
 
-/**
- * @deprecated Use `RetellClient` — `createWebCall()` / `monitorCall()` handle
- * the API calls, transcript and take-over ordering for you. Removed in 4.0.
- */
-export class RetellWebClient extends EventEmitter {
+export class WebCallClient extends EventEmitter {
   private transport?: Transport;
   private connected: boolean = false;
   private defaultTransport: TransportKind;
@@ -38,7 +33,7 @@ export class RetellWebClient extends EventEmitter {
   public analyzerComponent!: AnalyzerComponent;
   private captureAudioFrame?: number;
 
-  constructor(options: RetellClientOptions = {}) {
+  constructor(options: WebCallClientOptions = {}) {
     super();
     this.defaultTransport = options.defaultTransport || "livekit";
   }

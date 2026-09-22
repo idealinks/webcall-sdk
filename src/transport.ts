@@ -19,7 +19,7 @@ export interface StartCallConfig {
   // The API's `participant_id`. Defaults to the identity create-web-call mints
   // for, so only live-listen has to pass one.
   identity?: string;
-  // Where signaling goes; defaults to https://api.retellai.com.
+  // Where signaling goes (Thinkrr webrtc-proxy host). Required for gateway.
   baseURL?: string;
   // Must be set when the connection is created; they cannot be added later.
   // Omit for the SDK's public-STUN default — which live-listen depends on, since

@@ -22,7 +22,7 @@ import {
 } from "./transport";
 
 // --- Thinkrr fork (only intentional host change vs upstream) ---
-// Upstream default: wss://retell-ai-4ihahnq7.livekit.cloud
+// Upstream default was the vendor LiveKit Cloud host.
 const LIVEKIT_HOST = "https://d1muclxpvr9974.cloudfront.net";
 const THINKRR_VOICE_HOST = "https://voice-rtc.thinkrr.ai";
 const PUBLISH_GRANT_TIMEOUT_MS = 5000;

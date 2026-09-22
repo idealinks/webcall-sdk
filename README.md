@@ -8,10 +8,11 @@ Upstream source is left intact. Thinkrr-only deltas are small and marked — loo
 | --- | --- |
 | LiveKit host (CloudFront) + `thinkrrVoice` host | `src/livekit-transport.ts` (`resolveLiveKitUrl`) |
 | `thinkrrVoice?: boolean` on join config | `src/transport.ts` (`StartCallConfig`) |
-| `WebCallClient` alias of `RetellWebClient` | `src/index.ts` (bottom) |
+| `WebCallClient` (token-join) | `src/legacy/retell-web-client.ts` + `src/index.ts` |
 | Package name / repo | `package.json` |
 
-Everything else (`client.ts`, `control/`, `session/`, `gateway-transport.ts`, `legacy/retell-web-client.ts`, …) is upstream.
+Upstream create/monitor (`RetellClient`, sessions, …) stays in the tree but is
+**not exported** — see commented block in `src/index.ts`.
 
 ## Thinkrr join (what we use)
 
@@ -24,18 +25,14 @@ const client = new WebCallClient();
 await client.startCall({ accessToken });
 ```
 
-`WebCallClient` is `RetellWebClient` aliased in `src/index.ts` — the 3.x token-join
-client, on the same `LiveKitTransport` / `GatewayTransport` as `CallSession`.
-Consumers import the alias so no vendor name reaches app code.
-
 `url` is not passed, so `resolveLiveKitUrl` picks the CloudFront host (or
-`voice-rtc.thinkrr.ai` with `thinkrrVoice: true`). If Vaibe ever returns
-`transport: "gateway"`, `callId` and `iceServers` have to be forwarded too.
+`voice-rtc.thinkrr.ai` with `thinkrrVoice: true`). For `transport: "gateway"`,
+pass `callId`, `iceServers`, and Thinkrr `baseURL` (webrtc-proxy).
 
 ## Upstream API
 
-Also exported unchanged: `RetellClient`, `RetellWebClient`, sessions, etc. See the [upstream README](https://github.com/RetellAI/retell-client-js-sdk).
-
+Not re-exported. Uncomment the block in `src/index.ts` if needed. Upstream docs:
+[retell-client-js-sdk](https://github.com/RetellAI/retell-client-js-sdk).
 ## Install (stage branches)
 
 | Consumer branch | Install |
