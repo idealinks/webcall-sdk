@@ -46,7 +46,7 @@ test("gateway without callId emits error (does not hang)", async () => {
     void client.startCall({
       accessToken: "tok",
       transport: "gateway",
-      baseURL: "https://example.test/v1/voice-agents",
+      baseURL: "https://example.test/v1",
     });
   });
   assert.equal(err, "Error starting call");

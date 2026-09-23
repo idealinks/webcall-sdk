@@ -18,12 +18,12 @@ const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
 // workable default — live-listen passes its own.
 const WEB_CALL_IDENTITY = "client";
 
-// Whitened SDK version header — Thinkrr webrtc-proxy remaps to the vendor name.
+// Whitened SDK version header — Thinkrr /webrtc remaps to the vendor name.
 const SDK_VERSION_HEADER = "X-VoiceAI-Client-JS-SDK-Version";
 
-// Signaling goes through Thinkrr's webrtc-proxy (baseURL required). Media uses
+// Signaling goes through Thinkrr /webrtc (baseURL required). Media uses
 // ice_servers from create-web-call (whitened hosts restored at connect time).
-const WEBRTC_PROXY_PREFIX = "/webrtc-proxy";
+const WEBRTC_SIGNALING_PREFIX = "/webrtc";
 
 export class GatewayTransport implements Transport {
   private config: StartCallConfig;
@@ -44,7 +44,7 @@ export class GatewayTransport implements Transport {
       throw new Error("baseURL is required for the gateway transport");
     }
     const host = config.baseURL.replace(/\/+$/, "");
-    this.base = `${host}${WEBRTC_PROXY_PREFIX}/${config.callId}`;
+    this.base = `${host}${WEBRTC_SIGNALING_PREFIX}/${config.callId}`;
   }
 
   public async connect(handlers: TransportHandlers): Promise<void> {

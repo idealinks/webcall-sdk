@@ -27,7 +27,7 @@ await client.startCall({ accessToken });
 
 `url` is not passed, so `resolveLiveKitUrl` picks the CloudFront host (or
 `voice-rtc.thinkrr.ai` with `thinkrrVoice: true`). For `transport: "gateway"`,
-pass `callId`, `iceServers`, and Thinkrr `baseURL` (webrtc-proxy).
+pass `callId`, `iceServers`, and Thinkrr `baseURL` (e.g. `…/voice-agents/v1`; SDK appends `/webrtc/{callId}/…`).
 
 ## Upstream API
 
